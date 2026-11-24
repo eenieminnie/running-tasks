@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Running Tasks</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --ink: #2B2627; --soft: #6B6466; --bg: #FFF7FA; --line: #F3E6EA; --pink: #F8B4CB; --blue: #A8CBF0; --green: #ADDFA5; --yellow: #F9E08B; --peach: #F7B79A; --lilac: #C9C3F2; --grey: #E7E1E3; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); }
+body { font-family: 'Instrument Sans', system-ui, sans-serif; color: var(--ink); -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; }
+button { font-family: inherit; color: var(--ink); cursor: pointer; }
+.app { position: relative; display: flex; flex-direction: column; height: 100vh; height: 100dvh; max-width: 520px; margin: 0 auto; overflow: hidden; }
+.top { flex: none; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 10px; }
+.bands { position: relative; display: flex; flex-direction: column; gap: 6px; }
+.brow { display: flex; align-items: center; gap: 6px; filter: url(#rough); }
+.tip-s { width: 16px; height: 22px; flex: none; } .tip-l { width: 30px; height: 46px; flex: none; }
+.pl { clip-path: polygon(100% 0, 100% 100%, 0 50%); } .pr { clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.band { flex: 1; min-width: 0; height: 46px; display: flex; align-items: center; padding: 0 12px; font: 800 clamp(26px, 9vw, 38px)/1 Outfit, sans-serif; letter-spacing: -.02em; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+.band.r { justify-content: flex-end; border-radius: 0 6px 6px 0; } .band.l { border-radius: 6px 0 0 6px; }
+.reg { position: absolute; width: 14px; height: 14px; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding: 0 2px 2px 0; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: none; display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 6px; border: 2px solid transparent; font: 800 14px Outfit, sans-serif; letter-spacing: .03em; text-transform: uppercase; }
+.tab.on { border-color: var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+.tab span { font-weight: 600; }
+.seg { display: flex; gap: 2px; padding: 3px; border: 2px solid var(--ink); border-radius: 9px; background: #fff; }
+.seg button { flex: 1; height: 32px; border: none; border-radius: 6px; background: transparent; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
+.seg button.on { background: var(--ink); color: #fff; }
+.seg button span { font-weight: 500; opacity: .8; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 99px; border: 1.5px solid var(--ink); background: #fff; font-size: 13px; font-weight: 600; }
+.dot { width: 7px; height: 7px; border-radius: 99px; flex: none; }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 10px 16px calc(110px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; }
+.sec { display: flex; flex-direction: column; gap: 6px; }
+.sband { display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 0 10px; border-radius: 6px; font: 800 15px Outfit, sans-serif; letter-spacing: .02em; text-transform: uppercase; }
+.sp { flex: 1; }
+.mini { height: 22px; padding: 0 8px; border-radius: 4px; border: 1.5px solid var(--ink); background: #fff; font: 800 11px Outfit, sans-serif; text-transform: uppercase; }
+.card { background: #fff; border-radius: 10px; padding: 0 12px; box-shadow: 0 1px 3px rgba(43, 38, 39, .08); }
+.wcard { background: #fff; border-radius: 10px; padding: 12px; box-shadow: 0 1px 3px rgba(43, 38, 39, .08); display: flex; flex-direction: column; gap: 10px; }
+.row { border-bottom: 1px solid var(--line); }
+.row:last-child { border-bottom: none; }
+.rmain { display: flex; align-items: center; gap: 8px; min-height: 46px; }
+.cb { width: 36px; height: 44px; margin-left: -6px; flex: none; border: none; background: none; padding: 0; display: flex; align-items: center; justify-content: center; }
+.cb i { width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 5px; background: #fff; display: block; }
+.ttxt { flex: 1; min-width: 0; font-size: 15px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: none; background: none; text-align: left; padding: 12px 0; }
+.row.open .ttxt { white-space: normal; }
+.due { flex: none; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1.5px solid var(--soft); color: var(--soft); }
+.due.today { background: var(--ink); border-color: var(--ink); color: #fff; }
+.due.over { background: #C2290B; border-color: #C2290B; color: #fff; }
+.datebtn { flex: none; display: flex; align-items: center; gap: 4px; height: 30px; padding: 0 8px; border-radius: 6px; border: 1.5px dashed var(--soft); background: #fff; font-size: 12px; font-weight: 700; }
+.star { display: flex; color: #E07A3F; flex: none; }
+.acts { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 0 12px 30px; }
+.act { height: 32px; padding: 0 10px; border-radius: 6px; border: 1.5px solid var(--ink); background: #fff; font: 800 12px Outfit, sans-serif; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
+.act.y { background: var(--yellow); } .act.dark { background: var(--ink); color: #fff; } .act.ghost { border-color: var(--soft); color: var(--soft); }
+.act.on { background: var(--pink); }
+.prompt { width: 100%; display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 9px 0 12px; border-radius: 8px; border: 2px dashed var(--ink); background: #fff; text-align: left; }
+.prompt.done { border-style: solid; background: var(--pink); padding: 0 12px; }
+.ph { font: 800 15px Outfit, sans-serif; text-transform: uppercase; }
+.pill { flex: none; height: 32px; padding: 0 16px; border-radius: 6px; border: 2px solid var(--ink); background: var(--pink); display: flex; align-items: center; font: 800 13px Outfit, sans-serif; letter-spacing: .04em; text-transform: uppercase; }
+.muted { font-size: 14px; color: var(--soft); }
+.empty { align-items: center; text-align: center; padding: 26px 16px; }
+.big { font: 800 64px/.9 Outfit, sans-serif; letter-spacing: -.04em; }
+.kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.kpi { border: 2px solid var(--ink); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.klab { font: 800 13px Outfit, sans-serif; text-transform: uppercase; letter-spacing: .04em; }
+.hrow { width: 100%; display: flex; align-items: center; gap: 10px; min-height: 48px; border: none; border-bottom: 1px solid var(--line); background: none; padding: 0; text-align: left; font-size: 15px; }
+.hrow:last-child { border-bottom: none; }
+.tag { flex: none; font-size: 12px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; }
+.bars { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; align-items: end; height: 120px; }
+.bar { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; }
+.bar b { font: 800 13px Outfit, sans-serif; }
+.bar i { width: 100%; display: block; border-radius: 4px 4px 0 0; }
+.bar small { font-size: 11px; font-weight: 600; color: var(--soft); }
+.split { display: flex; height: 18px; border: 2px solid var(--ink); border-radius: 6px; overflow: hidden; }
+.key { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.key i { width: 10px; height: 10px; border-radius: 3px; border: 1.5px solid var(--ink); display: block; }
+.field { width: 100%; height: 46px; border-radius: 8px; border: 2px solid var(--ink); background: #fff; padding: 0 14px; font: 16px 'Instrument Sans', sans-serif; color: var(--ink); }
+.field::placeholder { color: #7A7274; }
+.wk { width: 100%; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px; border-radius: 6px; border: 2px solid var(--ink); background: var(--green); font: 800 15px Outfit, sans-serif; text-transform: uppercase; }
+.wk small { flex: 1; text-align: right; font: 600 12px 'Instrument Sans', sans-serif; text-transform: none; }
+.dayh { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); padding: 0 2px; }
+.dayh .sp { border-top: 1.5px dotted var(--soft); }
+.arow { width: 100%; display: flex; align-items: center; gap: 10px; min-height: 44px; border: none; background: none; padding: 0; text-align: left; font-size: 15px; }
+.tick { width: 18px; height: 18px; flex: none; border-radius: 4px; border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; }
+.ideah { flex: none; width: 74px; text-align: center; font: 800 12px Outfit, sans-serif; letter-spacing: .04em; text-transform: uppercase; padding: 3px 0; border-radius: 4px; }
+.irow { width: 100%; display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border: none; background: none; text-align: left; }
+.isub { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--soft); margin-top: 3px; }
+nav { position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; padding: 4px 8px calc(8px + env(safe-area-inset-bottom)); background: #fff; border-top: 2px solid var(--ink); }
+nav button { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 58px; border: none; background: none; font: 800 12px Outfit, sans-serif; letter-spacing: .04em; text-transform: uppercase; }
+.pip { width: 34px; height: 6px; border-radius: 99px; border: 1.5px solid transparent; }
+.fab { position: absolute; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 11; width: 56px; height: 56px; border-radius: 16px; border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); display: flex; align-items: center; justify-content: center; }
+.toast { position: absolute; left: 14px; right: 14px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 12; display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 14px; border-radius: 10px; background: var(--ink); color: #fff; box-shadow: 0 4px 14px rgba(43, 38, 39, .25); }
+.toast span { flex: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toast button { flex: none; height: 32px; padding: 0 12px; border-radius: 6px; border: none; background: var(--yellow); font: 800 13px Outfit, sans-serif; text-transform: uppercase; }
+.veil { position: absolute; inset: 0; z-index: 20; background: rgba(43, 38, 39, .35); display: flex; flex-direction: column; justify-content: flex-end; }
+.sheet { max-height: 88%; background: var(--bg); border-radius: 18px 18px 0 0; border-top: 2px solid var(--ink); padding: 18px 18px calc(22px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; }
+.sh { display: flex; align-items: center; gap: 8px; font: 800 22px Outfit, sans-serif; text-transform: uppercase; }
+.plist { flex: 1; min-height: 0; overflow-y: auto; background: #fff; border-radius: 10px; border: 2px solid var(--ink); }
+.prow { width: 100%; display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 12px; border: none; border-bottom: 1px solid var(--line); background: #fff; text-align: left; font-size: 15px; }
+.prow.on { background: #FDE4EC; }
+.pnum { width: 24px; height: 24px; flex: none; border-radius: 99px; border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; font: 800 12px Outfit, sans-serif; background: #fff; }
+.prow.on .pnum { background: var(--pink); }
+.ell { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btns { display: flex; gap: 8px; }
+.bb { flex: 1; height: 46px; border-radius: 8px; border: 2px solid var(--ink); background: #fff; font: 800 15px Outfit, sans-serif; text-transform: uppercase; }
+.bb.main { flex: 2; background: var(--pink); }
+.demo { position: absolute; top: 6px; right: 8px; z-index: 30; font: 800 10px Outfit, sans-serif; letter-spacing: .08em; text-transform: uppercase; background: var(--ink); color: #fff; padding: 3px 6px; border-radius: 4px; }
+.grain { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: multiply; opacity: .25; z-index: 40; }
+.who { flex: none; display: flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 99px; background: var(--lilac); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.who.chase { background: #FFD9C7; border: 1.5px solid #C2290B; }
+.notes { margin: -4px 0 10px 30px; padding: 10px 12px; border-radius: 8px; background: #FBF4F6; font-size: 14px; line-height: 1.45; white-space: pre-wrap; color: var(--ink); }
+.nicon { flex: none; font-size: 13px; opacity: .7; }
+textarea.field { height: 96px; padding: 10px 14px; resize: none; line-height: 1.4; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+<filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="5" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+<filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0.2  0 0 0 0 0.15  0 0 0 0 0.16  0 0 0 0.5 0"/></filter>
+</svg>
+<div class="app" id="app"></div>
+<svg class="grain" aria-hidden="true"><rect width="100%" height="100%" filter="url(#grain)"/></svg>
+<script>
+/* ============ SETTINGS: paste your Apps Script web app URL (ends in /exec) ============ */
+const CONFIG = { API_URL: 'PASTE_YOUR_WEB_APP_URL_HERE' };
+/* ===================================================================================== */
+
+const tg = window.Telegram && window.Telegram.WebApp;
+const DEMO = /[?&]demo\b/.test(location.search) || !/^https:\/\//.test(CONFIG.API_URL);
+const COL = { all: '#F8B4CB', work: '#A8CBF0', church: '#ADDFA5', personal: '#F9E08B', inbox: '#E7E1E3', ideas: '#F7B79A', dash: '#C9C3F2', arch: '#ADDFA5' };
+const GNAME = { work: 'Work', church: 'Church', personal: 'Me', inbox: 'Untagged' };
+const CATCOL = { hr: '#3E7BC4', pro: '#E07A3F', sm: '#8A63D2', past: '#2E9E6A', idr: '#2F6FDB', dance: '#D9558E', exit: '#6E6668', me: '#C99A12' };
+const HEATS = { now: { label: 'Now', bg: '#F7B79A' }, brewing: { label: 'Brewing', bg: '#F9E08B' }, parked: { label: 'Parked', bg: '' } };
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DEFAULT_CATS = [
+  { key: 'hr', name: 'HR', group: 'work' }, { key: 'pro', name: 'Promoter', group: 'work' }, { key: 'sm', name: 'Marketing/SM', group: 'work' },
+  { key: 'past', name: 'Pastoral', group: 'church' }, { key: 'idr', name: 'IDR', group: 'church' }, { key: 'dance', name: 'Dance', group: 'church' },
+  { key: 'exit', name: 'EXIT', group: 'church' }, { key: 'me', name: 'Personal', group: 'personal' },
+];
+const I = {
+  check: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  star: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.5 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>',
+  plus: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  cal: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>',
+  home: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>',
+  idea: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>',
+  dash: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>',
+  arch: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9M10 13h4"/></svg>',
+  reg: (pos) => '<svg class="reg" style="' + pos + '" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#FFFFFF" stroke="#2B2627" stroke-width="1.5"/><path d="M10 1a9 9 0 0 1 9 9h-9z M10 19a9 9 0 0 1-9-9h9z" fill="#2B2627"/></svg>',
+};
+
+let data = null, status = 'loading', toastTimer = null, pending = 0, chain = Promise.resolve();
+const ui = {
+  screen: 'home', tab: 'all', chip: '', view: 'any', rowOpen: '', datePick: '', sheet: '', draft: '', moveFor: '',
+  picking: false, topDraft: [], ideaFilter: 'all', ideaOpen: '', archTab: 'done', archGroup: 'all',
+  archOpen: { this: true, last: false, older: false }, archRow: '', q: '', toast: null, draft2: '',
+};
+
+/* ---------------- helpers ---------------- */
+const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const pad = (n) => (n < 10 ? '0' : '') + n;
+const toD = (s) => { const p = s.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])); };
+const ymd = (d) => d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
+const addDays = (s, n) => { const d = toD(s); d.setUTCDate(d.getUTCDate() + n); return ymd(d); };
+const dow = (s) => toD(s).getUTCDay();
+const diffDays = (a, b) => Math.round((toD(b) - toD(a)) / 864e5);
+const fmtDay = (s) => { const d = toD(s); return DAYS[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MONS[d.getUTCMonth()]; };
+const sgToday = () => ymd(new Date(Date.now() + 8 * 3600e3));
+const nowHM = () => { const d = new Date(Date.now() + 8 * 3600e3); return pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()); };
+const T = () => (data ? data.today : sgToday());
+const cats = () => (data && data.categories) || DEFAULT_CATS;
+const catOf = (k) => cats().find((c) => c.key === k);
+const groupOf = (k) => (catOf(k) ? catOf(k).group : 'inbox');
+const catShort = (k) => { const c = catOf(k); return c ? (c.name === 'Marketing/SM' ? 'SM' : c.name) : 'Untagged'; };
+const catsIn = (g) => cats().filter((c) => c.group === g);
+function dueInfo(due) {
+  const t = T();
+  if (!due) return { rank: null, label: '' };
+  if (due < t) return { rank: 0, label: 'Overdue', cls: 'over' };
+  if (due === t) return { rank: 1, label: 'Today', cls: 'today' };
+  if (due === addDays(t, 1)) return { rank: 2, label: 'Tmr' };
+  const n = diffDays(t, due);
+  if (n < 7) return { rank: 3, label: DAYS[dow(due)] };
+  const d = toD(due);
+  return { rank: 4, label: d.getUTCDate() + ' ' + MONS[d.getUTCMonth()] };
+}
+function dateOpts() {
+  const t = T(), w = dow(t);
+  return [
+    { label: 'Today', v: t }, { label: 'Tmr', v: addDays(t, 1) },
+    { label: w === 5 ? 'Next Fri' : 'Fri', v: addDays(t, ((5 - w + 7) % 7) || 7) },
+    { label: 'Next wk', v: addDays(t, ((8 - w) % 7) || 7) },
+  ];
+}
+const waitDays = (t) => diffDays(t.waitSince || String(t.created || T()).slice(0, 10), T());
+const needsChase = (t) => !!t.waitOn && (waitDays(t) >= 3 || (!!t.due && t.due <= T()));
+const mine = () => data.tasks.filter((t) => !t.waitOn);
+const waiting = () => data.tasks.filter((t) => t.waitOn);
+const rankOf = (t) => { const r = dueInfo(t.due).rank; return r === null ? 9 : r; };
+const sortTasks = (a, b) => (b.top3 - a.top3) || (b.star - a.star) || (rankOf(a) - rankOf(b)) || String(a.created).localeCompare(String(b.created));
+function hap(kind) {
+  try {
+    if (!tg || !tg.HapticFeedback) return;
+    if (kind === 'ok') tg.HapticFeedback.notificationOccurred('success'); else tg.HapticFeedback.impactOccurred('light');
+  } catch (e) { }
+}
+
+/* ---------------- server ---------------- */
+function fetchApi(action, payload) {
+  return fetch(CONFIG.API_URL + '?api=1', {
+    method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ initData: tg ? tg.initData : '', action: action }, payload)),
+  }).then((r) => r.json());
+}
+function call(action, payload) {
+  pending++;
+  const run = chain.then(() => (DEMO ? demoApply(action, payload || {}) : fetchApi(action, payload || {})));
+  chain = run.catch(() => { });
+  return run
+    .then((res) => { if (!res || !res.ok) throw new Error((res && res.error) || 'failed'); return res; })
+    .then((res) => { pending--; if (pending === 0) { data = res.data; status = 'ready'; render(); } return res; },
+      (err) => {
+        pending--;
+        const m = err && err.message;
+        if (!data) { status = m === 'not_in_telegram' || m === 'not_owner' ? 'outside' : 'error'; render(); return null; }
+        toast(m === 'expired' ? 'Session expired. Close and reopen the app.' : 'Couldn\'t save. Refreshing…');
+        if (pending === 0) load();
+        return null;
+      });
+}
+function load() { return call('load'); }
+
+/* ---------------- optimistic local changes ---------------- */
+const findT = (id) => data.tasks.find((t) => t.id === id);
+function localClose(id, st) {
+  const t = findT(id); if (!t) return null;
+  data.tasks = data.tasks.filter((x) => x.id !== id);
+  data.archive.unshift(Object.assign({}, t, { status: st, doneAt: T() + ' ' + nowHM() }));
+  return t;
+}
+function localReopen(id) {
+  const a = data.archive.find((x) => x.id === id); if (!a) return;
+  data.archive = data.archive.filter((x) => x.id !== id);
+  data.tasks.push(Object.assign({}, a, { status: 'open', doneAt: '' }));
+}
+
+/* ---------------- toast ---------------- */
+function toast(msg, undoId) {
+  ui.toast = { msg: msg, undo: undoId || '' };
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { ui.toast = null; render(); }, 4000);
+  render();
+}
+
+/* ---------------- actions ---------------- */
+const A = {
+  nav: (v) => { ui.screen = v; ui.rowOpen = ''; ui.ideaOpen = ''; ui.archRow = ''; resetScroll = true; },
+  tab: (v) => { ui.tab = v; ui.chip = ''; ui.rowOpen = ''; resetScroll = true; },
+  view: (v) => { ui.view = v; ui.rowOpen = ''; },
+  chip: (v) => { ui.chip = ui.chip === v ? '' : v; },
+  check: (id) => {
+    const t = localClose(id, 'done'); if (!t) return;
+    hap('ok'); ui.rowOpen = '';
+    call('done', { id: id });
+    toast('Done: ' + t.text, id);
+  },
+  undo: () => {
+    const id = ui.toast && ui.toast.undo; if (!id) return;
+    localReopen(id); ui.toast = null; clearTimeout(toastTimer);
+    call('reopen', { id: id });
+  },
+  row: (id) => { ui.rowOpen = ui.rowOpen === id ? '' : id; ui.datePick = ''; },
+  datepick: (id) => { ui.datePick = ui.datePick === id ? '' : id; },
+  setdue: (id, v) => { const t = findT(id); if (!t) return; t.due = v; ui.datePick = ''; hap(); call('setDue', { id: id, due: v }); },
+  star: (id) => { const t = findT(id); if (!t) return; t.star = !t.star; hap(); call('star', { id: id }); },
+  setcat: (id, v) => { const t = findT(id); if (!t) return; t.cat = v; ui.rowOpen = ''; call('setCat', { id: id, cat: v }); toast('Moved to ' + catShort(v)); },
+  drop: (id) => { const t = localClose(id, 'dropped'); if (!t) return; ui.rowOpen = ''; call('drop', { id: id }); toast('Dropped: ' + t.text, id); },
+  pick: () => { ui.picking = true; ui.topDraft = data.tasks.filter((t) => t.top3).map((t) => t.id); },
+  ptoggle: (id) => {
+    const i = ui.topDraft.indexOf(id);
+    if (i > -1) ui.topDraft.splice(i, 1); else if (ui.topDraft.length < 3) { ui.topDraft.push(id); hap(); }
+  },
+  pclear: () => { ui.topDraft = []; },
+  pdone: () => {
+    ui.picking = false;
+    data.tasks.forEach((t) => { t.top3 = ui.topDraft.indexOf(t.id) > -1; });
+    call('setTop', { ids: ui.topDraft.slice() });
+  },
+  pclose: () => { ui.picking = false; },
+  fab: () => { ui.sheet = ui.screen === 'ideas' ? 'idea' : 'task'; ui.draft = ''; ui.draft2 = ''; focusDraft = true; },
+  sclose: () => { ui.sheet = ''; ui.moveFor = ''; ui.draft2 = ''; },
+  ssave: () => {
+    const text = ui.draft.trim(), kind = ui.sheet, moveFor = ui.moveFor;
+    const notes = (ui.draft2 || '').trim(); ui.draft2 = '';
+    if (kind === 'wait') {
+      ui.sheet = ''; ui.moveFor = '';
+      const t = findT(moveFor); if (!t) return;
+      const who = text.replace(/^@/, '').slice(0, 30) || 'Someone';
+      t.waitOn = who; t.waitSince = T(); hap('ok');
+      call('setWait', { id: moveFor, who: who }); toast('⏳ Waiting on ' + who);
+      return;
+    }
+    if (kind === 'editTask' || kind === 'editIdea') {
+      ui.sheet = ''; ui.moveFor = '';
+      if (!text) return;
+      const list = kind === 'editTask' ? data.tasks : data.ideas;
+      const it = list.find((x) => x.id === moveFor); if (!it || (it.text === text && (it.notes || '') === notes)) return;
+      it.text = text; it.notes = notes; hap();
+      call(kind === 'editTask' ? 'edit' : 'ideaEdit', { id: moveFor, text: text, notes: notes });
+      toast('Updated ✏️');
+      return;
+    }
+    if (!text && kind !== 'move') { ui.sheet = ''; return; }
+    ui.sheet = ''; ui.moveFor = ''; ui.draft = '';
+    hap('ok');
+    if (kind === 'move') { call('firstMove', { id: moveFor, text: text }).then((r) => r && toast('First move added ✨')); }
+    else { call('add', { text: notes ? text + '\n' + notes : text, kind: kind }).then((r) => r && toast(kind === 'idea' ? 'Idea saved ☕' : 'Saved ✨')); }
+    toast('Saving…');
+  },
+  tedit: (id) => { const t = findT(id); if (!t) return; ui.sheet = 'editTask'; ui.moveFor = id; ui.draft = t.text; ui.draft2 = t.notes || ''; ui.rowOpen = ''; focusDraft = true; },
+  iedit: (id) => { const i = data.ideas.find((x) => x.id === id); if (!i) return; ui.sheet = 'editIdea'; ui.moveFor = id; ui.draft = i.text; ui.draft2 = i.notes || ''; ui.ideaOpen = ''; focusDraft = true; },
+  waitsheet: (id) => { const t = findT(id); if (!t) return; ui.sheet = 'wait'; ui.moveFor = id; ui.draft = t.waitOn === 'Someone' ? '' : (t.waitOn || ''); ui.rowOpen = ''; focusDraft = true; },
+  whopick: (name) => { ui.draft = name; A.ssave(); },
+  chased: (id) => { const t = findT(id); if (!t) return; t.waitSince = T(); ui.rowOpen = ''; hap(); call('chased', { id: id }); toast('👋 Chased. Clock reset'); },
+  mine: (id) => { const t = findT(id); if (!t) return; t.waitOn = ''; t.waitSince = ''; ui.rowOpen = ''; hap(); call('setWait', { id: id, who: '' }); toast('↩️ Back on your list'); },
+  itotask: (id) => {
+    const i = data.ideas.find((x) => x.id === id); if (!i) return;
+    data.ideas = data.ideas.filter((x) => x.id !== id);
+    data.tasks.push({ id: 'tmp' + id, text: i.text, cat: i.cat, star: false, due: '', top3: false, rollovers: 0, created: T() + ' ' + nowHM(), status: 'open', doneAt: '' });
+    ui.ideaOpen = ''; hap('ok');
+    call('ideaToTask', { id: id }); toast('Moved to your tasks ✅');
+  },
+  toidea: (id) => {
+    const t = findT(id); if (!t) return;
+    data.tasks = data.tasks.filter((x) => x.id !== id);
+    data.ideas.unshift({ id: 'tmp' + id, text: t.text, cat: t.cat, heat: 'brewing', heatSince: T(), created: t.created, step: false });
+    ui.rowOpen = ''; hap();
+    call('toIdea', { id: id }); toast('Moved to Ideas ☕');
+  },
+  ifilter: (v) => { ui.ideaFilter = v; ui.ideaOpen = ''; },
+  irow: (id) => { ui.ideaOpen = ui.ideaOpen === id ? '' : id; },
+  imove: (id) => { ui.sheet = 'move'; ui.moveFor = id; ui.draft = ''; ui.ideaOpen = ''; focusDraft = true; },
+  iheat: (id, v) => { const i = data.ideas.find((x) => x.id === id); if (!i) return; i.heat = v; i.heatSince = T(); ui.ideaOpen = ''; call('ideaHeat', { id: id, heat: v }); },
+  iarch: (id) => { data.ideas = data.ideas.filter((x) => x.id !== id); ui.ideaOpen = ''; call('ideaArchive', { id: id }); toast('Idea archived'); },
+  go: (v) => {
+    ui.screen = v === 'ideas' ? 'ideas' : 'home'; ui.tab = 'all'; ui.chip = ''; resetScroll = true;
+    if (v === 'today') ui.view = 'today';
+    if (v === 'nodate') ui.view = 'nodate';
+    if (v === 'top') { ui.view = 'any'; if (!data.tasks.some((t) => t.top3)) A.pick(); }
+    if (v === 'ideas') ui.ideaFilter = 'now';
+    if (v === 'waiting') ui.view = 'waiting';
+  },
+  atab: (v) => { ui.archTab = v; ui.archRow = ''; },
+  agroup: (v) => { ui.archGroup = v; ui.archRow = ''; },
+  aweek: (v) => { ui.archOpen[v] = !ui.archOpen[v]; },
+  arow: (id) => { ui.archRow = ui.archRow === id ? '' : id; },
+  areopen: (id) => { localReopen(id); ui.archRow = ''; call('reopen', { id: id }); toast('Back on your list'); },
+  retry: () => { status = 'loading'; render(); load(); },
+};
+
+/* ---------------- render pieces ---------------- */
+function header() {
+  const col = ui.screen === 'home' ? COL[ui.tab] : ui.screen === 'ideas' ? COL.ideas : ui.screen === 'dash' ? COL.dash : COL.arch;
+  const W = { home: ['Running', 'Tasks'], ideas: ['Idea', 'Vault'], dash: ['Insights', 'This week'], arch: ['Done &amp;', 'Dusted'] }[ui.screen];
+  const bg = 'background:' + col;
+  return '<div class="bands">' +
+    '<div class="brow"><div class="tip-s pl" style="' + bg + '"></div><div class="tip-l pl" style="' + bg + '"></div><div class="band r" style="' + bg + '">' + W[0] + '</div></div>' +
+    '<div style="position:relative"><div class="brow"><div class="band l" style="' + bg + '">' + W[1] + '</div><div class="tip-l pr" style="' + bg + '"></div><div class="tip-s pr" style="' + bg + '"></div></div>' +
+    '</div></div>';
+}
+
+function rowHtml(t) {
+  const d = dueInfo(t.due), open = ui.rowOpen === t.id;
+  let h = '<div class="row' + (open ? ' open' : '') + '"><div class="rmain">' +
+    '<button class="cb" data-a="check" data-id="' + t.id + '" aria-label="Mark done: ' + esc(t.text) + '"><i></i></button>' +
+    '<span class="dot" style="background:' + (CATCOL[t.cat] || '#A39C9E') + '"></span>' +
+    '<button class="ttxt" data-a="row" data-id="' + t.id + '" aria-expanded="' + open + '">' + esc(t.text) + '</button>' +
+    (t.notes && !open ? '<span class="nicon" role="img" aria-label="Has notes">📝</span>' : '') +
+    (t.star ? '<span class="star" role="img" aria-label="Priority">' + I.star + '</span>' : '') +
+    (t.waitOn ? '<span class="who' + (needsChase(t) ? ' chase' : '') + '">' + (needsChase(t) ? '🔔 ' : '') + esc(t.waitOn) + ' · ' + waitDays(t) + 'd</span>' : '') +
+    (d.label ? '<span class="due ' + (d.cls || '') + '">' + d.label + '</span>' : t.waitOn ? '' : '<button class="datebtn" data-a="datepick" data-id="' + t.id + '">' + I.cal + 'Date</button>') +
+    '</div>' + (open && t.notes ? '<div class="notes">' + esc(t.notes) + '</div>' : '');
+  if (ui.datePick === t.id) {
+    h += '<div class="acts">' + dateOpts().map((o) => '<button class="act y" data-a="setdue" data-id="' + t.id + '" data-v="' + o.v + '">' + o.label + '</button>').join('') +
+      (t.due ? '<button class="act ghost" data-a="setdue" data-id="' + t.id + '" data-v="">No date</button>' : '') + '</div>';
+  }
+  if (open) {
+    h += '<div class="acts">' +
+      '<button class="act' + (t.star ? ' on' : '') + '" data-a="star" data-id="' + t.id + '">' + I.star + (t.star ? 'Priority' : 'Make priority') + '</button>' +
+      '<button class="act" data-a="datepick" data-id="' + t.id + '">' + I.cal + (t.due ? 'Change date' : 'Add date') + '</button>' +
+      '<button class="act" data-a="tedit" data-id="' + t.id + '">✏️ Edit' + (t.notes ? '' : ' / add notes') + '</button>' +
+      (t.waitOn
+        ? '<button class="act" style="background:var(--lilac)" data-a="chased" data-id="' + t.id + '">👋 Chased</button><button class="act" data-a="mine" data-id="' + t.id + '">↩️ Back to me</button><button class="act" data-a="waitsheet" data-id="' + t.id + '">👤 Change who</button>'
+        : '<button class="act" style="background:var(--lilac)" data-a="waitsheet" data-id="' + t.id + '">⏳ Waiting on…</button>') +
+      '<button class="act" data-a="toidea" data-id="' + t.id + '">💡 Make it an idea</button>' +
+      '<button class="act ghost" data-a="drop" data-id="' + t.id + '">Drop</button></div>' +
+      '<div class="acts">' + cats().filter((c) => c.key !== t.cat).map((c) => '<button class="act" data-a="setcat" data-id="' + t.id + '" data-v="' + c.key + '"><span class="dot" style="background:' + CATCOL[c.key] + '"></span>' + esc(c.name === 'Marketing/SM' ? 'SM' : c.name) + '</button>').join('') + '</div>';
+  }
+  return h + '</div>';
+}
+
+function section(title, color, items, extra) {
+  return '<div class="sec"><div class="sband" style="background:' + color + '"><span>[' + esc(title) + ']</span><span class="sp"></span><span>' + (extra || items.length) + '</span></div>' +
+    '<div class="card">' + items.map(rowHtml).join('') + '</div></div>';
+}
+
+function homeTop() {
+  const tabs = ['all', 'work', 'church', 'personal'].map((g) => {
+    const n = g === 'all' ? data.tasks.length : data.tasks.filter((t) => groupOf(t.cat) === g).length;
+    return '<button class="tab' + (ui.tab === g ? ' on' : '') + '" style="background:' + COL[g] + '" data-a="tab" data-v="' + g + '">' + (g === 'all' ? 'All' : GNAME[g]) + '<span>' + n + '</span></button>';
+  }).join('');
+  const pool = tabPool(), own = pool.filter((t) => !t.waitOn);
+  const views = [['any', 'Everything', pool.length], ['today', 'Today', own.filter((t) => { const r = dueInfo(t.due).rank; return r !== null && r <= 1; }).length], ['nodate', 'No date', own.filter((t) => !t.due).length], ['waiting', '⏳', pool.length - own.length]]
+    .map((v) => '<button class="' + (ui.view === v[0] ? 'on' : '') + '"' + (v[0] === 'waiting' ? ' aria-label="Waiting on others" style="flex:.6"' : '') + ' data-a="view" data-v="' + v[0] + '">' + v[1] + '<span>' + v[2] + '</span></button>').join('');
+  const chipCats = ui.tab === 'work' || ui.tab === 'church' ? catsIn(ui.tab) : [];
+  const chips = chipCats.length ? '<div class="chips">' + chipCats.map((c) => '<button class="chip" style="background:' + (ui.chip === c.key ? COL[ui.tab] : '#fff') + '" data-a="chip" data-v="' + c.key + '"><span class="dot" style="background:' + CATCOL[c.key] + '"></span>' + esc(catShort(c.key)) + '</button>').join('') + '</div>' : '';
+  return '<div class="tabs">' + tabs + '</div><div class="seg">' + views + '</div>' + chips;
+}
+
+function tabPool() {
+  let p = data.tasks;
+  if (ui.tab !== 'all') p = p.filter((t) => groupOf(t.cat) === ui.tab);
+  if (ui.chip) p = p.filter((t) => t.cat === ui.chip);
+  return p;
+}
+
+function homeBody() {
+  let pool = tabPool();
+  if (ui.view === 'waiting') {
+    const w = pool.filter((t) => t.waitOn).sort((a, b) => waitDays(b) - waitDays(a));
+    const people = [];
+    w.forEach((t) => { const k = t.waitOn.toLowerCase(); let g = people.find((p) => p.k === k); if (!g) { g = { k: k, name: t.waitOn, items: [] }; people.push(g); } g.items.push(t); });
+    people.sort((a, b) => a.name.localeCompare(b.name));
+    if (!people.length) return '<div class="wcard empty"><div class="ph" style="font-size:22px">Nobody owes you</div><div class="muted">Not waiting on anyone. To hand something off, tap a task → ⏳ Waiting on…</div></div>';
+    return people.map((p) => section(p.name, COL.dash, p.items, p.items.filter(needsChase).length ? p.items.length + ' · 🔔' + p.items.filter(needsChase).length : '')).join('');
+  }
+  const waitingHere = pool.filter((t) => t.waitOn).sort((a, b) => waitDays(b) - waitDays(a));
+  pool = pool.filter((t) => !t.waitOn);
+  if (ui.view === 'today') pool = pool.filter((t) => { const r = dueInfo(t.due).rank; return r !== null && r <= 1; });
+  if (ui.view === 'nodate') pool = pool.filter((t) => !t.due);
+  pool = pool.slice().sort(sortTasks);
+  let h = '';
+  if (ui.tab === 'all') {
+    const showTop = ui.view === 'any';
+    const top = showTop ? pool.filter((t) => t.top3) : [];
+    if (showTop) {
+      const topToday = top.length + data.archive.filter((a) => a.top3 && a.status === 'done').length;
+      if (topToday === 0) h += '<button class="prompt" data-a="pick"><span class="ph">[Top 3]</span><span class="muted ell">None picked yet</span><span class="pill">Pick</span></button>';
+      else if (top.length === 0) h += '<button class="prompt done" data-a="pick"><span class="ph">[Top 3]</span><span class="ell" style="font-size:14px;font-weight:600">Cleared. Iconic.</span><span style="font-size:13px;font-weight:700;text-decoration:underline">Pick more</span></button>';
+      else h += '<div class="sec"><div class="sband" style="background:' + COL.all + '"><span>[Top 3]</span><span class="sp"></span><span>' + top.length + '</span><button class="mini" data-a="pick">Edit</button></div><div class="card">' + top.map(rowHtml).join('') + '</div></div>';
+    }
+    const rest = pool.filter((t) => top.indexOf(t) < 0);
+    ['work', 'church', 'personal', 'inbox'].forEach((g) => {
+      const items = rest.filter((t) => groupOf(t.cat) === g);
+      if (items.length) h += section(GNAME[g], COL[g], items);
+    });
+  } else {
+    const list = ui.chip ? [catOf(ui.chip)] : catsIn(ui.tab);
+    list.forEach((c) => { const items = pool.filter((t) => t.cat === c.key); if (items.length) h += section(catShort(c.key), COL[ui.tab], items); });
+  }
+  if (ui.view === 'any' && waitingHere.length) h += section('⏳ Waiting on', COL.dash, waitingHere);
+  if (!h || (ui.tab === 'all' && pool.length === 0 && ui.view !== 'any')) {
+    const msg = ui.view === 'nodate' ? 'Every task has a date. Love that for you.' : ui.view === 'today' ? 'Nothing due today. Breathe.' : 'Nothing here. Dump something with the + button.';
+    h = (ui.tab === 'all' && ui.view === 'any' ? h : '') + '<div class="wcard empty"><div class="ph" style="font-size:22px">All sorted</div><div class="muted">' + msg + '</div></div>';
+  }
+  return h;
+}
+
+function ideaAge(i) {
+  if (i.heat === 'now') return Math.max(0, diffDays(i.heatSince || T(), T())) + 'd hot';
+  const c = String(i.created || '').slice(0, 10);
+  if (!c) return '';
+  const n = diffDays(c, T());
+  return n === 0 ? 'added today' : n === 1 ? 'added yesterday' : n < 7 ? 'added ' + DAYS[dow(c)] : 'added ' + fmtDay(c).slice(4);
+}
+
+function ideasTop() {
+  const n = (h) => data.ideas.filter((i) => !h || i.heat === h).length;
+  return '<div class="seg">' + [['all', 'All', ''], ['now', 'Now', 'now'], ['brewing', 'Brewing', 'brewing'], ['parked', 'Parked', 'parked']]
+    .map((f) => '<button class="' + (ui.ideaFilter === f[0] ? 'on' : '') + '" data-a="ifilter" data-v="' + f[0] + '">' + f[1] + '<span>' + n(f[2]) + '</span></button>').join('') + '</div>';
+}
+
+function ideasBody() {
+  const order = { now: 0, brewing: 1, parked: 2 };
+  const list = data.ideas.filter((i) => ui.ideaFilter === 'all' || i.heat === ui.ideaFilter).sort((a, b) => order[a.heat] - order[b.heat]);
+  if (!list.length) return '<div class="wcard empty"><div class="muted">No ideas here right now. Tap + to add one.</div></div>';
+  return '<div class="muted" style="font-size:13px;padding:0 2px">Tap an idea for options. Now ideas show in your 11pm close until they get a first move.</div><div class="card">' +
+    list.map((i) => {
+      const hs = HEATS[i.heat] || HEATS.brewing, open = ui.ideaOpen === i.id;
+      return '<div class="row"><button class="irow" data-a="irow" data-id="' + i.id + '" aria-expanded="' + open + '">' +
+        '<span class="ideah" style="' + (hs.bg ? 'background:' + hs.bg : 'border:1.5px dashed var(--soft)') + '">' + hs.label + '</span>' +
+        '<span style="flex:1;min-width:0"><span style="font-size:15px;line-height:1.3">' + esc(i.text) + '</span>' +
+        '<span class="isub"><span class="dot" style="background:' + (CATCOL[i.cat] || '#A39C9E') + '"></span>' + esc(catShort(i.cat)) + ' · ' + ideaAge(i) +
+        (i.step ? '<b style="color:#1F7A4F">· first move added</b>' : '') + '</span></span></button>' +
+        (open ? '<div class="acts" style="padding-left:84px"><button class="act dark" data-a="imove" data-id="' + i.id + '">+ First move</button>' +
+          '<button class="act" style="background:var(--green)" data-a="itotask" data-id="' + i.id + '">✅ Make it a task</button>' +
+          '<button class="act" data-a="iedit" data-id="' + i.id + '">✏️ Edit</button>' +
+          Object.keys(HEATS).filter((h) => h !== i.heat).map((h) => '<button class="act" style="' + (HEATS[h].bg ? 'background:' + HEATS[h].bg : '') + '" data-a="iheat" data-id="' + i.id + '" data-v="' + h + '">' + HEATS[h].label + '</button>').join('') +
+          '<button class="act ghost" data-a="iarch" data-id="' + i.id + '">Archive</button></div>' : '') + '</div>';
+    }).join('') + '</div>';
+}
+
+function weekStart() { const t = T(); return addDays(t, -((dow(t) + 6) % 7)); }
+
+function dashBody() {
+  const t = T(), ws = weekStart();
+  const doneWeek = data.archive.filter((a) => a.status === 'done' && a.doneAt.slice(0, 10) >= ws);
+  const doneToday = doneWeek.filter((a) => a.doneAt.slice(0, 10) === t).length;
+  const overdue = data.tasks.filter((x) => dueInfo(x.due).rank === 0).length;
+  const todayN = data.tasks.filter((x) => dueInfo(x.due).rank === 1).length;
+  const nodate = data.tasks.filter((x) => !x.due).length;
+  const topOpen = data.tasks.filter((x) => x.top3).length;
+  const topDone = data.archive.filter((a) => a.top3 && a.status === 'done').length;
+  const topLine = topOpen + topDone === 0 ? 'No Top 3 picked yet' : topOpen === 0 ? 'Top 3 cleared. Iconic.' : topOpen + ' of your Top 3 still open';
+  const nowIdeas = data.ideas.filter((i) => i.heat === 'now' && !i.step).length;
+  const w = waiting(), chase = w.filter(needsChase).length;
+  const stuck = mine().filter((x) => x.rollovers >= 2).sort((a, b) => b.rollovers - a.rollovers);
+  const days = [0, 1, 2, 3, 4, 5, 6].map((k) => { const d = addDays(ws, k); return { d: d, n: d > t ? null : doneWeek.filter((a) => a.doneAt.slice(0, 10) === d).length }; });
+  const max = Math.max(4, ...days.map((x) => x.n || 0));
+  const groups = ['work', 'church', 'personal', 'inbox'].map((g) => ({ g: g, n: doneWeek.filter((a) => groupOf(a.cat) === g).length })).filter((x) => x.n || x.g !== 'inbox');
+  const total = doneWeek.length;
+  const lead = groups.slice().sort((a, b) => b.n - a.n)[0];
+  const best = days.filter((x) => x.n).sort((a, b) => b.n - a.n)[0];
+  const row = (act, tag, tagStyle, text) => '<button class="hrow" data-a="go" data-v="' + act + '"><span class="tag" style="' + tagStyle + '">' + tag + '</span><span style="flex:1">' + text + '</span><span aria-hidden="true">→</span></button>';
+  let h = '<div class="kpis">' +
+    '<div class="kpi" style="background:' + COL.all + '"><span class="klab">On you</span><span class="big">' + mine().length + '</span><span style="font-size:13px">' + todayN + ' due today</span></div>' +
+    '<div class="kpi" style="background:' + COL.dash + '"><span class="klab">Done this week</span><span class="big">' + total + '</span><span style="font-size:13px">' + doneToday + ' today</span></div></div>';
+  h += '<div class="sec"><div class="sband" style="background:' + COL.all + '"><span>[Heads up]</span></div><div class="card">' +
+    (overdue ? row('today', overdue + ' overdue', 'background:#C2290B;color:#fff', 'Something slipped. Peek?') : '') +
+    row('top', 'Top 3', 'background:var(--ink);color:#fff', topLine) +
+    (nodate ? row('nodate', nodate + ' no date', 'border:1.5px dashed var(--soft)', 'Give them a day?') : '') +
+    (nowIdeas ? row('ideas', nowIdeas + ' Now idea' + (nowIdeas > 1 ? 's' : ''), 'background:' + COL.ideas, 'Still needs a first move') : '') +
+    (w.length ? row('waiting', '⏳ ' + w.length + ' waiting', 'background:' + COL.dash, chase ? chase + ' need a chase 🔔' : 'All moving. Nobody to chase') : '') +
+    '</div></div>';
+  if (stuck.length) {
+    h += '<div class="sec"><div class="sband" style="background:' + COL.ideas + '"><span>[Stuck]</span><span class="sp"></span><span style="font-size:12px;font-weight:700">pushed 2x+</span></div><div class="card">' +
+      stuck.slice(0, 5).map((s) => '<div class="arow" style="border-bottom:1px solid var(--line)"><span style="flex:1">' + esc(s.text) + '</span><span style="font:800 22px Outfit,sans-serif">' + s.rollovers + 'x</span></div>').join('') + '</div></div>';
+  }
+  h += '<div class="sec"><div class="sband" style="background:' + COL.dash + '"><span>[Your week]</span></div><div class="wcard"><div class="bars">' +
+    days.map((x) => '<div class="bar"><b>' + (x.n === null ? '' : x.n) + '</b><i style="' + (x.n === null ? 'height:6px;background:#EFE6E9' : 'height:' + Math.max(6, Math.round(x.n / max * 84)) + 'px;background:' + (x.d === t ? COL.all : COL.dash) + ';border:2px solid var(--ink);border-bottom:none') + '"></i><small>' + DAYS[dow(x.d)] + '</small></div>').join('') +
+    '</div></div></div>';
+  h += '<div class="sec"><div class="sband" style="background:' + COL.arch + '"><span>[Where it went]</span></div><div class="wcard">' +
+    (total ? '<div class="split">' + groups.map((x) => '<div style="width:' + Math.round(x.n / total * 100) + '%;background:' + COL[x.g] + '"></div>').join('') + '</div>' +
+      '<div style="display:flex;gap:14px;flex-wrap:wrap">' + groups.map((x) => '<span class="key"><i style="background:' + COL[x.g] + '"></i>' + GNAME[x.g] + ' <b>' + x.n + '</b></span>').join('') + '</div>' +
+      '<div style="font-size:14px">' + GNAME[lead.g] + ' took ' + Math.round(lead.n / total * 100) + '% of what you closed this week.' + (best ? ' ' + ({ Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday' })[DAYS[dow(best.d)]] + ' was your power day.' : '') + '</div>'
+      : '<div class="muted">Nothing closed yet this week. Today\'s a good day to start.</div>') +
+    '</div></div>';
+  return h;
+}
+
+function archTop() {
+  return '<label class="sr" for="q">Search past tasks</label><input class="field" id="q" placeholder="Search past tasks" value="' + esc(ui.q) + '" autocomplete="off">' +
+    '<div class="seg">' + [['done', 'Done'], ['dropped', 'Dropped']].map((x) => '<button class="' + (ui.archTab === x[0] ? 'on' : '') + '" data-a="atab" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
+    '<div class="chips">' + [['all', 'All'], ['work', 'Work'], ['church', 'Church'], ['personal', 'Me']].map((x) => '<button class="chip" style="background:' + (ui.archGroup === x[0] ? COL.arch : '#fff') + '" data-a="agroup" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>';
+}
+
+function archBody() {
+  const t = T(), ws = weekStart(), q = ui.q.trim().toLowerCase();
+  const pool = data.archive.filter((a) => a.status === ui.archTab && (ui.archGroup === 'all' || groupOf(a.cat) === ui.archGroup) && (!q || a.text.toLowerCase().indexOf(q) > -1))
+    .sort((a, b) => b.doneAt.localeCompare(a.doneAt));
+  const weeks = [['this', 'This week', (d) => d >= ws], ['last', 'Last week', (d) => d < ws && d >= addDays(ws, -7)], ['older', 'Earlier', (d) => d < addDays(ws, -7)]];
+  let h = '';
+  weeks.forEach((w) => {
+    const items = pool.filter((a) => w[2](a.doneAt.slice(0, 10)));
+    if (!items.length) return;
+    const days = [];
+    items.forEach((a) => { const d = a.doneAt.slice(0, 10); let g = days.find((x) => x.d === d); if (!g) { g = { d: d, items: [] }; days.push(g); } g.items.push(a); });
+    const open = q ? true : ui.archOpen[w[0]];
+    h += '<div class="sec"><button class="wk" data-a="aweek" data-v="' + w[0] + '" aria-expanded="' + open + '"><span>[' + w[1] + ']</span><small>' + items.length + (ui.archTab === 'done' ? ' done' : ' dropped') + ' · ' + days.length + (days.length === 1 ? ' day' : ' days') + '</small><span style="width:18px;text-align:center">' + (open ? '−' : '+') + '</span></button>';
+    if (open) {
+      days.forEach((g) => {
+        const label = g.d === t ? 'Today' : g.d === addDays(t, -1) ? 'Yesterday' : fmtDay(g.d);
+        h += '<div class="sec" style="gap:4px"><div class="dayh"><span>' + label + '</span><span class="sp"></span><span>' + g.items.length + '</span></div><div class="card">' +
+          g.items.map((a) => '<div class="row"><button class="arow" data-a="arow" data-id="' + a.id + '"><span class="tick" style="background:' + (a.status === 'done' ? COL.arch : '#fff') + '">' + (a.status === 'done' ? I.check : '') + '</span>' +
+            '<span class="dot" style="background:' + (CATCOL[a.cat] || '#A39C9E') + '"></span><span class="ell">' + esc(a.text) + '</span><span style="font-size:12px;color:var(--soft)">' + esc(a.doneAt.slice(11, 16)) + '</span></button>' +
+            (ui.archRow === a.id ? '<div class="acts"><button class="act y" data-a="areopen" data-id="' + a.id + '">↩ Put back on my list</button></div>' : '') + '</div>').join('') + '</div></div>';
+      });
+    }
+    h += '</div>';
+  });
+  if (!h) h = '<div class="wcard empty"><div class="muted">' + (q ? 'Nothing matches "' + esc(ui.q) + '".' : 'Nothing here yet.') + '</div></div>';
+  return h + '<div class="muted" style="font-size:12px;text-align:center;padding:4px 0">Showing the last 3 weeks. Everything older stays safe in your Google Sheet.</div>';
+}
+
+function sheets() {
+  let h = '';
+  if (ui.sheet) {
+    const idea = ui.sheet === 'move' ? data.ideas.find((i) => i.id === ui.moveFor) : null;
+    const c = {
+      task: ['Dump it', '/hr * send iCal invite tmr', 'Same tags as the bot: /hr /pro /sm /past /idr /dance /exit /me · * priority · tdy · tmr · by fri', 'Save task'],
+      idea: ['New idea', 'What if we…', 'Starts as Brewing. Add !now for Now, or a tag like /hr', 'Save idea'],
+      move: ['First move', 'e.g. Draft the tour plan by fri', idea ? 'For: ' + esc(idea.text) : '', 'Add as task'],
+      editTask: ['Edit task', '', 'Short title on top, details in notes. Date, priority and category are on the task\'s buttons.', 'Save'],
+      editIdea: ['Edit idea', '', 'Short title on top, details in notes.', 'Save'],
+      wait: ['Waiting on who?', 'e.g. Chris', 'It moves to ⏳ Waiting on and gets a 🔔 if it sits 3+ days.', 'Save'],
+    }[ui.sheet];
+    h += '<div class="veil"><div class="sheet" role="dialog" aria-label="' + c[0] + '"><div class="sh">' + c[0] + '</div>' +
+      '<label class="sr" for="draft">' + c[0] + '</label><input class="field" id="draft" placeholder="' + esc(c[1] || 'Title') + '" value="' + esc(ui.draft) + '" autocomplete="off" enterkeyhint="done">' +
+      (ui.sheet === 'wait' ? '' : '<label class="sr" for="draft2">Notes</label><textarea class="field" id="draft2" placeholder="Notes (optional): the longer instructions go here">' + esc(ui.draft2) + '</textarea>') +
+      (ui.sheet === 'wait' && people().length ? '<div class="chips">' + people().map((n) => '<button class="chip" data-a="whopick" data-v="' + esc(n) + '">' + esc(n) + '</button>').join('') + '</div>' : '') +
+      '<div class="muted" style="font-size:13px">' + c[2] + '</div>' +
+      '<div class="btns"><button class="bb" data-a="sclose">Cancel</button><button class="bb main" data-a="ssave">' + c[3] + '</button></div></div></div>';
+  }
+  if (ui.picking) {
+    const list = mine().sort((a, b) => (b.star - a.star) || (rankOf(a) - rankOf(b)));
+    h += '<div class="veil"><div class="sheet" role="dialog" aria-label="Pick your Top 3" style="height:80%"><div class="sh"><span style="flex:1">Pick your Top 3</span><span style="font-size:18px">' + ui.topDraft.length + '/3</span></div>' +
+      '<div class="muted" style="font-size:13px">Priority and due-soon first. These lead your morning brief.</div><div class="plist">' +
+      list.map((t) => { const k = ui.topDraft.indexOf(t.id); return '<button class="prow' + (k > -1 ? ' on' : '') + '" data-a="ptoggle" data-id="' + t.id + '"><span class="pnum">' + (k > -1 ? k + 1 : '') + '</span><span class="ell">' + esc(t.text) + '</span><span style="font-size:12px;color:var(--soft)">' + esc(catShort(t.cat)) + '</span></button>'; }).join('') +
+      '</div><div class="btns"><button class="bb" data-a="pclear">Clear</button><button class="bb main" data-a="pdone">Done</button></div></div></div>';
+  }
+  return h;
+}
+
+function people() {
+  const seen = {}, out = [];
+  data.tasks.concat(data.archive).forEach((t) => { if (t.waitOn && t.waitOn !== 'Someone' && !seen[t.waitOn.toLowerCase()]) { seen[t.waitOn.toLowerCase()] = 1; out.push(t.waitOn); } });
+  return out.slice(0, 8);
+}
+
+function navHtml() {
+  const col = ui.screen === 'home' ? COL[ui.tab] : ui.screen === 'ideas' ? COL.ideas : ui.screen === 'dash' ? COL.dash : COL.arch;
+  return '<nav aria-label="Main">' + [['home', 'Home', I.home], ['ideas', 'Ideas', I.idea], ['dash', 'Insights', I.dash], ['arch', 'Archive', I.arch]].map((n) =>
+    '<button data-a="nav" data-v="' + n[0] + '"' + (ui.screen === n[0] ? ' aria-current="page"' : '') + '><span class="pip" style="' + (ui.screen === n[0] ? 'background:' + col + ';border-color:var(--ink)' : '') + '"></span>' + n[2] + n[1] + '</button>').join('') + '</nav>';
+}
+
+/* ---------------- main render ---------------- */
+let resetScroll = false, focusDraft = false;
+const appEl = document.getElementById('app');
+function render() {
+  const sc = appEl.querySelector('.scroll');
+  const keep = sc && !resetScroll ? sc.scrollTop : 0;
+  resetScroll = false;
+  const active = document.activeElement && document.activeElement.id;
+  const caret = active && document.activeElement.selectionStart;
+  let h = DEMO ? '<span class="demo">Demo</span>' : '';
+  if (status !== 'ready') {
+    const msg = status === 'loading' ? '<div class="muted">Loading your tasks…</div>'
+      : status === 'outside' ? '<div class="ph" style="font-size:20px">Open me from Telegram</div><div class="muted">Send /app to your Running Tasks bot and tap 📱 Open app.</div>'
+      : '<div class="ph" style="font-size:20px">Couldn\'t load</div><div class="muted">Check your connection.</div><button class="pill" data-a="retry" style="align-self:center">Try again</button>';
+    appEl.innerHTML = h + '<div class="top">' + header() + '</div><div class="scroll"><div class="wcard empty">' + msg + '</div></div>';
+    return;
+  }
+  const top = ui.screen === 'home' ? homeTop() : ui.screen === 'ideas' ? ideasTop() : ui.screen === 'arch' ? archTop() : '';
+  const body = ui.screen === 'home' ? homeBody() : ui.screen === 'ideas' ? ideasBody() : ui.screen === 'dash' ? dashBody() : archBody();
+  const fabCol = ui.screen === 'ideas' ? COL.ideas : COL[ui.tab];
+  h += '<div class="top">' + header() + top + '</div><div class="scroll">' + body + '</div>';
+  if (ui.screen === 'home' || ui.screen === 'ideas') h += '<button class="fab" style="background:' + fabCol + (ui.toast ? ';bottom:calc(144px + env(safe-area-inset-bottom))' : '') + '" data-a="fab" aria-label="' + (ui.screen === 'ideas' ? 'Add an idea' : 'Add a task') + '">' + I.plus + '</button>';
+  if (ui.toast) h += '<div class="toast" role="status"><span>' + esc(ui.toast.msg) + '</span>' + (ui.toast.undo ? '<button data-a="undo">Undo</button>' : '') + '</div>';
+  h += navHtml() + sheets();
+  appEl.innerHTML = h;
+  const sc2 = appEl.querySelector('.scroll'); if (sc2) sc2.scrollTop = keep;
+  if (focusDraft) { focusDraft = false; const d = document.getElementById('draft'); if (d) d.focus(); }
+  else if (active) { const el = document.getElementById(active); if (el) { el.focus(); try { el.setSelectionRange(caret, caret); } catch (e) { } } }
+}
+
+appEl.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-a]');
+  if (!el) { if (e.target.classList.contains('veil')) { ui.sheet = ''; ui.picking = false; render(); } return; }
+  const fn = A[el.dataset.a]; if (!fn) return;
+  fn(el.dataset.id || el.dataset.v, el.dataset.v);
+  render();
+});
+appEl.addEventListener('input', (e) => {
+  if (e.target.id === 'draft') ui.draft = e.target.value;
+  if (e.target.id === 'draft2') ui.draft2 = e.target.value;
+  if (e.target.id === 'q') { ui.q = e.target.value; render(); }
+});
+appEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'draft') { A.ssave(); render(); } });
+
+/* ---------------- demo mode (preview without the bot) ---------------- */
+function demoData() {
+  const t = sgToday(), ws = addDays(t, -((dow(t) + 6) % 7));
+  const tk = (id, text, cat, o) => Object.assign({ id: id, text: text, cat: cat, star: false, due: '', top3: false, rollovers: 0, created: addDays(t, -2) + ' 10:00', status: 'open', doneAt: '', notes: '', waitOn: '', waitSince: '' }, o || {});
+  const ar = (id, text, cat, day, time, st) => ({ id: id, text: text, cat: cat, star: false, due: '', top3: false, rollovers: 0, created: '', status: st || 'done', doneAt: day + ' ' + time });
+  const yd = addDays(t, -1) >= ws ? addDays(t, -1) : addDays(t, -1);
+  return {
+    today: t, now: nowHM(), categories: DEFAULT_CATS,
+    tasks: [
+      tk('T1', 'Do KPI updates', 'hr', { star: true, due: t, top3: true }), tk('T2', 'Pae Arak video edit', 'sm', { star: true, top3: true }),
+      tk('T3', 'Catch up on Saturday meeting', 'idr', { due: t, top3: true }), tk('T4', 'Send iCal invite for Tuesday', 'hr', { due: addDays(t, -1), rollovers: 1 }),
+      tk('T5', 'BKK claims', 'hr', { due: addDays(t, 1) }), tk('T6', 'Send OOE', 'hr', { notes: 'To all new joiners this month.\nCc HR inbox, attach the updated form.' }),
+      tk('T20', 'Send town hall invites', 'hr', { waitOn: 'Chris', waitSince: addDays(t, -4), due: addDays(t, 3) }),
+      tk('T21', 'Caption drafts for December', 'sm', { waitOn: 'Gissy', waitSince: addDays(t, -1) }),
+      tk('T22', 'Roster for weekend roadshow', 'pro', { waitOn: 'Chris', waitSince: addDays(t, -1) }), tk('T7', 'Draft promoter intensive dates', 'pro', { due: addDays(t, 2) }),
+      tk('T8', 'Pre-empt SPs about group chat', 'pro'), tk('T9', 'Christmas campaign captions', 'sm', { due: addDays(t, 3) }),
+      tk('T10', 'Update LinkedIn post', 'sm', { rollovers: 3 }), tk('T11', 'Pull November IG insights', 'sm'), tk('T12', 'Choreo for Christmas', 'dance', { due: addDays(t, 9) }),
+      tk('T13', 'Plan December check-ins', 'past'), tk('T14', 'Book room for prayer night', 'past', { due: addDays(t, 4) }), tk('T15', 'Retreat venue shortlist', 'exit'),
+      tk('T16', 'Buy groceries', 'me', { due: addDays(t, 1) }), tk('T17', 'Book dentist', 'me', { rollovers: 2 }), tk('T18', 'Renew gym membership', 'me'), tk('T19', 'Reply to the photographer', ''),
+    ],
+    archive: [
+      ar('A1', 'Send associate programme', 'hr', t, '10:20'), ar('A2', 'Review TC staff group chat', 'pro', yd, '18:28'), ar('A3', 'Send OOE reminder', 'hr', yd, '17:56'),
+      ar('A4', 'Caption for Sonos post', 'sm', yd, '14:10'), ar('A5', 'Call mum', 'me', yd, '21:02'), ar('A6', 'Prayer list for the week', 'past', yd, '23:04'),
+      ar('A7', 'Order new lanyards', 'hr', yd, '23:00', 'dropped'), ar('A8', 'Dance rehearsal playlist', 'dance', addDays(ws, -1), '16:30'),
+      ar('A9', 'Saturday meeting slides', 'idr', addDays(ws, -2), '09:15'), ar('A10', 'KOL shortlist for December', 'sm', addDays(ws, -3), '17:40'),
+      ar('A11', 'Promoter roster for the weekend', 'pro', addDays(ws, -3), '15:12'), ar('A12', 'Grocery run', 'me', addDays(ws, -4), '20:20'),
+      ar('A13', 'Book photographer', 'sm', addDays(ws, -4), '23:00', 'dropped'), ar('A14', 'Team lunch booking', 'hr', addDays(ws, -9), '12:30'),
+    ],
+    ideas: [
+      { id: 'I1', text: 'Staff onboarding tour, same as guests. Close with Wheelock', cat: 'hr', heat: 'now', heatSince: addDays(t, -3), created: addDays(t, -5) + ' 17:13', step: false },
+      { id: 'I2', text: 'Members preview night before launch', cat: 'sm', heat: 'brewing', heatSince: addDays(t, -1), created: addDays(t, -1) + ' 09:00', step: false },
+      { id: 'I3', text: 'Adjacent category display at MW', cat: 'pro', heat: 'brewing', heatSince: addDays(t, -12), created: addDays(t, -12) + ' 11:00', step: false },
+      { id: 'I4', text: 'Promoter intensive into the HR rhythm', cat: 'hr', heat: 'brewing', heatSince: addDays(t, -4), created: addDays(t, -4) + ' 17:11', step: false },
+      { id: 'I5', text: 'Year-end thank-you notes for the team', cat: 'me', heat: 'parked', heatSince: addDays(t, -40), created: addDays(t, -40) + ' 12:00', step: false },
+    ],
+  };
+}
+let demoSeq = 100;
+function demoApply(action, p) {
+  return new Promise((res) => setTimeout(() => {
+    if (!data) data = demoData();
+    if (action === 'add') {
+      let text = p.text, cat = '', star = false, due = '';
+      const m = text.match(/^\/([a-z]+)\s+/i);
+      if (m && catOf(m[1].toLowerCase())) { cat = m[1].toLowerCase(); text = text.slice(m[0].length); }
+      if (/(^|\s)\*(\s|$)/.test(text)) { star = true; text = text.replace(/(^|\s)\*(\s|$)/, ' '); }
+      if (/\b(tdy|today)\b/i.test(text)) { due = T(); text = text.replace(/\b(tdy|today)\b/i, ''); }
+      if (/\b(tmr|tmrw|tomorrow)\b/i.test(text)) { due = addDays(T(), 1); text = text.replace(/\b(tmr|tmrw|tomorrow)\b/i, ''); }
+      text = text.replace(/[ \t]+/g, ' ').trim();
+      demoSeq++;
+      if (p.kind === 'idea') data.ideas.unshift({ id: 'I' + demoSeq, text: text.replace(/(^|\s)!(now)?\b/i, ' ').trim(), cat: cat, heat: /(^|\s)!(now)?\b/i.test(text) ? 'now' : 'brewing', heatSince: T(), created: T() + ' ' + nowHM(), step: false });
+      else { const parts = text.split('\n'); data.tasks.push({ id: 'T' + demoSeq, text: parts[0], notes: parts.slice(1).join('\n'), cat: cat, star: star, due: due, top3: false, rollovers: 0, created: T() + ' ' + nowHM(), status: 'open', doneAt: '', waitOn: '', waitSince: '' }); }
+    }
+    if (action === 'ideaToTask') { const t = data.tasks.find((x) => x.id === 'tmp' + p.id); if (t) t.id = 'T' + (++demoSeq); }
+    if (action === 'toIdea') { const i = data.ideas.find((x) => x.id === 'tmp' + p.id); if (i) i.id = 'I' + (++demoSeq); }
+    if (action === 'firstMove') {
+      const i = data.ideas.find((x) => x.id === p.id); demoSeq++;
+      if (i) { i.step = true; data.tasks.push({ id: 'T' + demoSeq, text: p.text || 'First move: ' + i.text, cat: i.cat, star: false, due: '', top3: false, rollovers: 0, created: T() + ' ' + nowHM(), status: 'open', doneAt: '' }); }
+    }
+    res({ ok: true, data: data });
+  }, 250));
+}
+
+/* ---------------- start ---------------- */
+if (tg) {
+  try { tg.ready(); tg.expand(); tg.setHeaderColor('#FFF7FA'); tg.setBackgroundColor('#FFF7FA'); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) { }
+}
+if (!DEMO && !(tg && tg.initData)) { status = 'outside'; render(); }
+else { render(); load(); }
+</script>
+</body>
+</html>
